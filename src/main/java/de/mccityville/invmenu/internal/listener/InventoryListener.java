@@ -9,6 +9,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.inventory.Inventory;
 
 public class InventoryListener implements Listener {
 
@@ -23,7 +24,17 @@ public class InventoryListener implements Listener {
         HumanEntity whoClicked = event.getWhoClicked();
         if (!(whoClicked instanceof Player))
             return;
-        boolean result = menuManager.dispatchClick((Player) whoClicked, event.getClickedInventory(), event.getSlot(), event.getClick());
+        Inventory inventory = event.getClickedInventory();
+        boolean result;
+        try {
+            result = menuManager.dispatchClick((Player) whoClicked, inventory, event.getSlot(), event.getClick());
+        } catch (RuntimeException e) {
+            event.setCancelled(true);
+            event.setResult(Event.Result.DENY);
+            whoClicked.setItemOnCursor(null);
+            whoClicked.closeInventory();
+            throw e;
+        }
         if (result) {
             event.setCancelled(true);
             event.setResult(Event.Result.DENY);
